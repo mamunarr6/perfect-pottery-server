@@ -20,6 +20,7 @@ async function run() {
         const productsCollection = database.collection('products')
         const ordersCollection = database.collection('orders')
         const usersCollection = database.collection('users')
+        const reviewsCollection = database.collection('reviews')
 
         app.get('/products', async (req, res) => {
             const cursor = productsCollection.find({})
@@ -63,7 +64,7 @@ async function run() {
             console.log(result);
         })
 
-
+        //get admin
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
@@ -75,12 +76,14 @@ async function run() {
             res.json({ admin: isAdmin })
         })
 
+        //save user by email/password 
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user)
             res.json(result)
         })
 
+        //save user by google login
         app.put('/users', async (req, res) => {
             const user = req.body;
             const filter = { email: user.email }
@@ -90,23 +93,26 @@ async function run() {
             res.json(result)
         })
 
-        app.put('/users/admin', verifyToken, async (req, res) => {
+        //set user as an admin
+        app.put('/users/admin', async (req, res) => {
             const user = req.body;
-            const requester = req.decodedEmail;
-            if (requester) {
-                const requesterAccount = usersCollection.findOne({ email: requester });
-                if (requesterAccount.role === 'admin') {
-                    const filter = { email: user.email }
-                    const updateDoc = { $set: { role: 'admin' } }
-                    const result = await usersCollection.updateOne(filter, updateDoc)
-                    res.json(result)
-                }
-                else {
-                    res.status(403).json({ message: 'You do not have access admin.' })
-                }
-            }
+            const filter = { email: user.email }
+            const updateDoc = { $set: { role: 'admin' } }
+            const result = await usersCollection.updateOne(filter, updateDoc)
+            res.json(result)
+        })
 
+        //post single review
+        app.post('/giveReview', async (req, res) => {
+            const review = req.body;
+            const result = await reviewsCollection.insertOne(review)
+            res.json(result)
+        })
 
+        //get all reviews
+        app.get('/reviews', async (req, res) => {
+            const result = await reviewsCollection.find({}).toArray();
+            res.json(result)
         })
 
     } finally {
