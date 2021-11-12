@@ -22,22 +22,46 @@ async function run() {
         const usersCollection = database.collection('users')
         const reviewsCollection = database.collection('reviews')
 
+        /* ===============================
+                products section
+        ================================= */
+
+        //get all products
         app.get('/products', async (req, res) => {
             const cursor = productsCollection.find({})
             const result = await cursor.toArray();
             res.json(result);
         })
 
+        //get single product
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
             const result = await productsCollection.findOne({ _id: ObjectId(id) });
             res.json(result);
         })
+
+        //add a product
+        app.post('/addProduct', async (req, res) => {
+            const product = req.body;
+            console.log(product)
+            const result = await productsCollection.insertOne(product)
+            res.json(result)
+        })
+
+        /* ===============================
+                order section
+        ================================= */
+
         //place order
         app.post('/placeOrder', async (req, res) => {
             const result = await ordersCollection.insertOne(req.body);
-            console.log(result)
             res.json(result);
+        })
+
+        //get all orders
+        app.get('/orders', async (req, res) => {
+            const result = await ordersCollection.find({}).toArray();
+            res.json(result)
         })
 
         //get single order
@@ -45,25 +69,37 @@ async function run() {
             const id = req.params.id;
             const result = await ordersCollection.findOne({ _id: ObjectId(id) });
             res.json(result);
-            console.log(req.body)
         })
 
         //delete single orders
-        app.delete("/deleteOrder/:id", async (req, res) => {
-            console.log(req.params);
+        app.delete('/deleteOrder/:id', async (req, res) => {
+            const id = req.params.id;
             const result = await ordersCollection.deleteOne({
-                _id: ObjectId(req.params.id),
+                _id: ObjectId(id),
             });
             res.json(result);
         });
 
-        //get my orders
-        app.get('/myOrders', async (req, res) => {
-            const result = await ordersCollection.find({ email: { $regex: req.query.email }, }).toArray();
-            res.json(result);
-            console.log(result);
+        //update single orders
+        app.put('/orders/update/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true }
+            const updateDoc = { $set: { status: 'shipped' } }
+            const result = await ordersCollection.updateOne(filter, updateDoc, options)
+            res.json(result)
         })
 
+        //get my orders
+        app.get('/myOrders', async (req, res) => {
+            const email = req.query.email
+            const result = await ordersCollection.find({ email: email, }).toArray();
+            res.json(result);
+        })
+
+        /* ===============================
+                user and admin section
+        ================================= */
         //get admin
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -102,6 +138,10 @@ async function run() {
             res.json(result)
         })
 
+        /* ===============================
+                reviews section
+        ================================= */
+
         //post single review
         app.post('/giveReview', async (req, res) => {
             const review = req.body;
@@ -114,6 +154,8 @@ async function run() {
             const result = await reviewsCollection.find({}).toArray();
             res.json(result)
         })
+
+
 
     } finally {
         // await client.close();
