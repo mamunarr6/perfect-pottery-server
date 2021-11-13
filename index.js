@@ -21,6 +21,7 @@ async function run() {
         const ordersCollection = database.collection('orders')
         const usersCollection = database.collection('users')
         const reviewsCollection = database.collection('reviews')
+        const newsCollection = database.collection('news')
 
         /* ===============================
                 products section
@@ -45,6 +46,13 @@ async function run() {
             const product = req.body;
             console.log(product)
             const result = await productsCollection.insertOne(product)
+            res.json(result)
+        })
+
+        //delete a product
+        app.delete('/deleteProduct/:id', async (req, res) => {
+            const id = req.params.id;
+            const result = await productsCollection.deleteOne({ _id: ObjectId(id) })
             res.json(result)
         })
 
@@ -74,9 +82,7 @@ async function run() {
         //delete single orders
         app.delete('/deleteOrder/:id', async (req, res) => {
             const id = req.params.id;
-            const result = await ordersCollection.deleteOne({
-                _id: ObjectId(id),
-            });
+            const result = await ordersCollection.deleteOne({ _id: ObjectId(id) });
             res.json(result);
         });
 
@@ -106,9 +112,7 @@ async function run() {
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             let isAdmin = false;
-            if (user?.role) {
-                isAdmin = true;
-            }
+            if (user?.role) { isAdmin = true }
             res.json({ admin: isAdmin })
         })
 
@@ -151,7 +155,16 @@ async function run() {
 
         //get all reviews
         app.get('/reviews', async (req, res) => {
-            const result = await reviewsCollection.find({}).toArray();
+            const result = await reviewsCollection.find({}).toArray()
+            res.json(result)
+        })
+
+        /* ===============================
+                news section
+        ================================= */
+        //get all news
+        app.get('/news', async (req, res) => {
+            const result = await newsCollection.find({}).toArray()
             res.json(result)
         })
 
